@@ -9,6 +9,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Class1 - Copy.cs" />
+    <Compile Remove="PortAudio.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PortAudio.cs" />
   </ItemGroup>
 
   <ItemGroup>
