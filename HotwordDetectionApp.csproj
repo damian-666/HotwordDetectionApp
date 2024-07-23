@@ -7,6 +7,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Class1 - Copy.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.1.0" />
@@ -17,6 +20,7 @@
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.18.1" />
-    <PackageReference Include="PortAudioSharp" Version="0.3.0" />
+    <PackageReference Include="SharperPortAudio" Version="1.0.3" />
+    <PackageReference Include="SilverCraft.CSCore.PortAudio" Version="0.1.0" />
   </ItemGroup>
 </Project>
