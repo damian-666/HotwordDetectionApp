@@ -3,6 +3,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia;
 using System.Text.Json;
 using System.IO;
+using ReactiveUI;
 
 namespace HotwordDetectionApp;
 
@@ -11,17 +12,41 @@ public partial class MainWindow : Window
 {
     private const string WindowStateFile = "windowstate.json";
 
+
+
     public MainWindow()
     {
         InitializeComponent();
+
+
+
 #if DEBUG
         this.AttachDevTools();
 #endif
         this.Closing+=MainWindow_Closing;
         this.Opened+=MainWindow_Opened;
+#if DEBUG
+            this.AttachDevTools();
+#endif
+        DataContext=new MainWindowViewModel();
+
+        var hotwordButtonsPanel = this.FindControl<StackPanel>("HotwordButtonsPanel");
+        var viewModel = (MainWindowViewModel)DataContext;
+
+        foreach (var hotword in viewModel.Hotwords)
+        {
+            var button = new Button { Content=hotword, Command=ReactiveCommand.Create(() => RecordHotword(hotword)) };
+            hotwordButtonsPanel.Children.Add(button);
+        }
     }
 
-    private void InitializeComponent()
+
+
+    private void RecordHotword(string hotword)
+    {
+        // Implement hotword recording logic
+    }
+        private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
     }
@@ -61,4 +86,7 @@ public partial class MainWindow : Window
         public double Width { get; set; }
         public double Height { get; set; }
     }
+
+
+  
 }
