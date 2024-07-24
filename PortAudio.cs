@@ -6,9 +6,10 @@ using System.Threading.Tasks;
     using System.IO;
     using System.Runtime.InteropServices;
 
-
-    using PortAudio = SharperPortAudio.Base;
-
+using SharperPortAudio.Streams;
+using PortAudio = SharperPortAudio.Base;
+using NAudio.CoreAudioApi.Interfaces;
+using SharperPortAudio.Base;
 
 namespace HotwordDetectionApp
 {
@@ -16,7 +17,7 @@ namespace HotwordDetectionApp
 
 
 
-    public class AudioCapture
+    public static class AudioCapture
     {
         private static PortAudio.Stream stream;
         private static Action<float[]> _onAudioCaptured;
@@ -36,7 +37,7 @@ namespace HotwordDetectionApp
             };
 
             PortAudio.PortAudio.Initialize(out _stream, ref inputParameters, IntPtr.Zero, 16000, 256, PortAudio.PaStreamFlags.paClipOff, Callback, IntPtr.Zero);
-            PortAudio.PortAudio.StreamReader = new StartStream(_stream);
+            SharperPortAudio.Base.Stream = new StartStream(_stream);
         }
 
         private static PortAudio.StreamCallbackResult Callback(IntPtr input, IntPtr output, uint frameCount, ref PortAudio.StreamCallbackTimeInfo timeInfo, PortAudio.StreamCallbackFlags statusFlags, IntPtr userData)

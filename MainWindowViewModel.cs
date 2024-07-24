@@ -1,12 +1,12 @@
 
-     using System;
-    using System.Collections.ObjectModel;
-    using System.Reactive;
-    using System.Windows.Input;
-    using Avalonia;
-    using Avalonia.Controls;
-    using Avalonia.Interactivity;
-    using Avalonia.Media;
+using System;
+using System.Collections.ObjectModel;
+using System.Reactive;
+using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 using ReactiveUI;
 
 
@@ -53,12 +53,12 @@ namespace HotwordDetectionApp
 
         private void StopCapture()
         {
-            // AudioCapture.StopCapture();
+            AudioCapture.StopCapture();
         }
 
         private void PlayAudio()
         {
-            //  AudioCapture.PlayAudio();
+              AudioCapture.PlayAudio();
         }
 
         private void OnAudioCaptured(float[] audioData)
@@ -66,7 +66,7 @@ namespace HotwordDetectionApp
             // Update signal strength and waveform here
             SignalStrength=CalculateRMS(audioData);
             DrawWaveform(audioData);
-            //    UpdateSignalBars(SignalStrength);
+            UpdateSignalBars(SignalStrength);
         }
 
         private double CalculateRMS(float[] audioData)
@@ -84,15 +84,6 @@ namespace HotwordDetectionApp
             // Implement waveform drawing logic here
         }
 
-        private static double CalculateRMS(float[] audioData)
-        {
-            double sum = 0;
-            foreach (var sample in audioData)
-            {
-                sum+=sample*sample;
-            }
-            return Math.Sqrt(sum/audioData.Length);
-        }
 
         //private void DrawWaveform(float[] audioData)
         //{
