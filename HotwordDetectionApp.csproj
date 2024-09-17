@@ -8,19 +8,30 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
   <ItemGroup>
+    <AvaloniaXaml Remove="Audio\**" />
+    <Compile Remove="Audio\**" />
+    <EmbeddedResource Remove="Audio\**" />
+    <None Remove="Audio\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="Class1 - Copy.cs" />
+    <Compile Remove="MainWindow.cs" />
+   
+    <Compile Remove="PortAudio - Copy.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="PortAudio.cs2" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.1.0" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0" />
+    <PackageReference Include="Avalonia" Version="11.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.1.1" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.1" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.1" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.18.1" />
-    <PackageReference Include="SharperPortAudio" Version="1.0.3" />
-    <PackageReference Include="SilverCraft.CSCore.PortAudio" Version="0.1.0" />
+    <PackageReference Include="PortAudioSharp2" Version="1.0.4" />
   </ItemGroup>
 </Project>
