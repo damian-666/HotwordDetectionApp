@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using static PortAudio.Bindings.PaBinding;
 
 namespace PortAudio.Audio.Bindings {
     internal static partial class PaBinding {

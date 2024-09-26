@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using PortAudio.Audio;
 using PortAudio.Audio.Bindings;
+using static PortAudio.Audio.Bindings.PaBinding;
 
 namespace HotwordDetectionApp.Audio
 {
-    class AudioEngine
+ 
+
+
+class AudioEngine
     {
         private const int FramesPerBuffer = 0; // paFramesPerBufferUnspecified
-        private const PaBinding.PaStreamFlags StreamFlags = PaBinding.PaStreamFlags.paNoFlag;
+        private  PaBinding.PaStreamParameters StreamFlags = stre
         public readonly int channels;
         public readonly int sampleRate;
         public readonly double latency;
@@ -19,7 +24,6 @@ namespace HotwordDetectionApp.Audio
         public AudioEngine(AudioDevice device, int channels, int sampleRate, double latency)
         {
             this.device=device;
-            this.channels=channels;
             this.sampleRate=sampleRate;
             this.latency=latency;
 
@@ -58,28 +62,28 @@ namespace HotwordDetectionApp.Audio
 
             PaBinding.MaybeThrow(PaBinding.Pa_StartStream(stream));
         }
-
-        public void Send(Span<float> samples)
+    }
+    public void Send(Span<float> samples)
+    {
+        unsafe
         {
-            unsafe
+            fixed (float* buffer = samples)
             {
-                fixed (float* buffer = samples)
-                {
-                    var frames = samples.Length/channels;
-                    PaBinding.Pa_WriteStream(stream, (nint)buffer, frames);
-                }
+                var frames = samples.Length/channels;
+                PaBinding.Pa_WriteStream(stream, (nint)buffer, frames);
             }
-        }
-
-        public void Dispose()
-        {
-            if (disposed||stream==nint.Zero)
-            {
-                return;
-            }
-            PaBinding.Pa_AbortStream(stream);
-            PaBinding.Pa_CloseStream(stream);
-            disposed=true;
         }
     }
+
+    public void Dispose()
+    {
+        if (disposed||stream==nint.Zero)
+        {
+            return;
+        }
+        PaBinding.Pa_AbortStream(stream);
+        PaBinding.Pa_CloseStream(stream);
+        disposed=true;
+    }
+}
 }

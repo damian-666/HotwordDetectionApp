@@ -10,17 +10,22 @@ using System.Threading.Tasks;
 //using static PortAudio.Bindings.PaBinding;
   using PortAudioSharp;
 using static PortAudioSharp.PortAudio;
+using Avalonia.Controls;
+using Avalonia;
+using static System.Net.WebRequestMethods;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HotwordDetectionApp           
 {
 
 
-    public static class AudioCaptureManager
-    {
+    public static class AudioCapture { 
         private static PortAudioSharp.Stream _stream;
         private static Action<float[]>? _onAudioCaptured;
         private static MemoryStream _audioBuffer = new MemoryStream();
-        private static StreamParameters? outputParameters;
+        private static StreamParameters outputParameters = new StreamParameters();
+        
+        public  static int SelectedMicIndex { get; set; }
 
         public static void StartCapture(Action<float[]> onAudioCaptured, int device)
         {
@@ -30,17 +35,29 @@ namespace HotwordDetectionApp
             _onAudioCaptured=onAudioCaptured;
             PortAudio.Initialize();
 
+var inputParameters=new StreamParameters
+{
+    device=device,
+    channelCount=PortAudio.GetDeviceInfo(device).maxInputChannels, // Ensure this is within supported range
+    sampleFormat=SampleFormat.Float32,
+    suggestedLatency=PortAudio.GetDeviceInfo(device).defaultLowInputLatency,
+    hostApiSpecificStreamInfo=IntPtr.Zero
+};
 
-            //  set up      the input parameters
-            var inputParameters = new StreamParameters {
+
+
+            device=PortAudio.DefaultOutputDevice;
+
+            var outputParameters = new StreamParameters
+            {
                 device=device,
-                channelCount=1,
+                channelCount=2,       /// ortAudio.GetDeviceInfo(device).maxOutputChannels, // Ensure this is within supported range
                 sampleFormat=SampleFormat.Float32,
-                suggestedLatency=PortAudio.GetDeviceInfo(device).defaultLowInputLatency,
+                suggestedLatency=PortAudio.GetDeviceInfo(device).defaultLowOutputLatency,
                 hostApiSpecificStreamInfo=IntPtr.Zero
 
+            }; 
 
-        };
 
              _stream =
                 new PortAudioSharp.Stream(inParams: inputParameters,

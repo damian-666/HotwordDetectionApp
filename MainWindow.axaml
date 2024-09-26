@@ -1,24 +1,50 @@
-<Window xmlns="https://github.com/avaloniaui"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:local="clr-namespace:HotwordDetectionApp"
-		x:Class="HotwordDetectionApp.MainWindow"
-		Title="Hotword Detection">
-	<StackPanel>
-		<TextBox Name="HotwordTextBox" IsReadOnly="True" />
-		<Button Content="Start Capture" Command="{Binding StartCaptureCommand}" />
-		<Button Content="Stop Capture" Command="{Binding StopCaptureCommand}" />
-		<Button Content="Play Audio" Command="{Binding PlayAudioCommand}" />
-		<StackPanel Orientation="Horizontal" Name="HotwordButtonsPanel">
-			<!-- Buttons will be added dynamically -->
-		</StackPanel>
-		<TextBlock Name="MicNameTextBlock" Text="{Binding MicName}" />
-		<StackPanel Orientation="Vertical">
-			<Rectangle Name="SignalBar1" Height="20" Width="20" Fill="Yellow" />
-			<Rectangle Name="SignalBar2" Height="20" Width="20" Fill="Yellow" />
-			<Rectangle Name="SignalBar3" Height="20" Width="20" Fill="Yellow" />
-			<Rectangle Name="SignalBar4" Height="20" Width="20" Fill="Yellow" />
-			<Rectangle Name="SignalBar5" Height="20" Width="20" Fill="Red" />
-		</StackPanel>
-		<Canvas Name="WaveformCanvas" Height="100" Background="Black" />
-	</StackPanel>
+
+<Window
+    x:Class="HotwordDetectionApp.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:HotwordDetectionApp"
+    Title="Hotword Detection">
+    <StackPanel>
+        <TextBox Name="HotwordTextBox" IsReadOnly="False" />
+        <ComboBox ItemsSource="{Binding MicrophoneNames}" SelectedItem="{Binding SelectedMicrophone}" />
+        <Button Content="Start Capture" Command="{Binding StartCaptureCommand}" />
+        <Button Command="{Binding StopCaptureCommand}" Content="Stop Capture" />
+        <Button Command="{Binding PlayAudioCommand}" Content="Play Audio" />
+        <StackPanel Name="HotwordButtonsPanel" Orientation="Horizontal">
+            <!--  Buttons will be added dynamically  -->
+        </StackPanel>
+        <TextBlock Name="MicNameTextBlock" Text="{Binding MicName}" />
+        <StackPanel Orientation="Vertical">
+            <Rectangle
+                Name="SignalBar1"
+                Width="20"
+                Height="20"
+                Fill="Yellow" />
+            <Rectangle
+                Name="SignalBar2"
+                Width="20"
+                Height="20"
+                Fill="Yellow" />
+            <Rectangle
+                Name="SignalBar3"
+                Width="20"
+                Height="20"
+                Fill="Yellow" />
+            <Rectangle
+                Name="SignalBar4"
+                Width="20"
+                Height="20"
+                Fill="Yellow" />
+            <Rectangle
+                Name="SignalBar5"
+                Width="20"
+                Height="20"
+                Fill="Red" />
+        </StackPanel>
+        <Canvas
+            Name="WaveformCanvas"
+            Height="100"
+            Background="Black" />
+    </StackPanel>
 </Window>

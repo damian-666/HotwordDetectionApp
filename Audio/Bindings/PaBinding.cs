@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using static PortAudio.Audio.Bindings.PaBinding;
 
-namespace PortAudio.Bindings {
+namespace PortAudio.Bindings
+{
     internal static partial class PaBinding {
         public static string GetErrorText(int code) => Marshal.PtrToStringAnsi(Pa_GetErrorText(code));
 

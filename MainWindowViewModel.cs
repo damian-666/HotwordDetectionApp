@@ -1,174 +1,176 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Reactive;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using ReactiveUI;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
-using SkiaSharp.Views.Avalonia;
+
 
 namespace HotwordDetectionApp
 {
 
-    public class MainWindowViewModel : ReactiveObject
-    {
-        public ICommand StartCaptureCommand { get; }
-        public ICommand StopCaptureCommand { get; }
-        public ICommand PlayAudioCommand { get; }
-        public ICommand ToggleMonitoringCommand { get; }
+  
+        public class MainWindowViewModel : ObservableObject
+        {        //Buffer Size = (Hotword Duration) * (Sample Rate)* (Bit Depth) / 8
+        //For example, if the hotword duration is 1 second, the sample rate is 44100 Hz, and the bit depth is 16, the buffer size would be:
+        const int BufferSize = 2*44100*16/80;
+        
+        // samples
+                                             //      Keep in mind that this is just a rough estimate, and you may need to adjust the buffer size based on your specific requirements and performance considerations.
 
-        private string _micName = "NO MIC";
-        public string MicName
-        {
-            get => _micName;
-            set => this.RaiseAndSetIfChanged(ref _micName, value);
-        }
+        // Existing code
+  
 
-        private double _signalStrength;
-        public double SignalStrength
-        {
-            get => _signalStrength;
-            set => this.RaiseAndSetIfChanged(ref _signalStrength, value);
-        }
+            private readonly RingBuffer<float> _audioBuffer = new(BufferSize);
+            private bool _isMonitoringEnabled;
+            private SKBitmap _waveformBitmap;
+            private int _waveformWidth = 500; // Example width
+            private int _waveformHeight = 100; // Example height
 
-        public ObservableCollection<string> Hotwords { get; set; }
+            public WriteableBitmap WaveformBitmap { get; private set; }
 
-        private bool isMonitoringEnabled;
-        private SKBitmap waveformBitmap;
-        private int waveformWidth = 500; // Example width
-        private int waveformHeight = 100; // Example height
+            public IRelayCommand StartCaptureCommand { get; }
+            public IRelayCommand StopCaptureCommand { get; }
+            public IRelayCommand PlayAudioCommand { get; }
+            public IRelayCommand ToggleMonitoringCommand { get; }
 
-        public WriteableBitmap WaveformBitmap { get; private set; }
+            public ObservableCollection<string> Hotwords { get; }
 
-        public MainWindowViewModel()
-        {
-            StartCaptureCommand=ReactiveCommand.Create(StartCapture);
-            StopCaptureCommand=ReactiveCommand.Create(StopCapture);
-            PlayAudioCommand=ReactiveCommand.Create(PlayAudio);
-            ToggleMonitoringCommand=ReactiveCommand.Create(ToggleMonitoring);
-
-            Hotwords=new ObservableCollection<string> { "left", "right", "up", "down" };
-            waveformBitmap=new SKBitmap(waveformWidth, waveformHeight);
-            WaveformBitmap=new WriteableBitmap(new Avalonia.PixelSize(waveformWidth, waveformHeight), new Avalonia.Vector(96, 96), Avalonia.Platform.PixelFormat.Bgra8888);
-        }
-
-        private void StartCapture()
-        {
-            // AudioCapture.StartCapture(OnAudioCaptured);
-            MicName="Default Microphone";
-            SignalStrength=0.5; // Example value, should be updated with actual signal strength
-        }
-
-        private void StopCapture()
-        {
-            AudioCapture.StopCapture();
-        }
-
-        private void PlayAudio()
-        {
-            // Implement your audio playback logic here
-            AudioCapture.PlayAudio();
-            // Example: Trigger waveform update during playback
-            // You need to hook this up with your actual audio playback library
-            DispatcherTimer timer = new DispatcherTimer
+            public MainWindowViewModel()
             {
-                Interval=TimeSpan.FromMilliseconds(50) // Update every 50ms
-            };
-            timer.Tick+=(sender, args) => {
-                // This should be replaced with actual audio data fetching during playback
-                float[] audioData = AudioCapture.GetAudioData();
-                OnAudioCaptured(audioData);
-            };
-            timer.Start();
-        }
-
-        private void ToggleMonitoring()
-        {
-            isMonitoringEnabled=!isMonitoringEnabled;
-            if (isMonitoringEnabled)
-            {
-                // Implement monitoring start logic
+                StartCaptureCommand=new RelayCommand(StartCapture);
+                StopCaptureCommand=new RelayCommand(StopCapture);
+                PlayAudioCommand=new RelayCommand(PlayAudio);
+                ToggleMonitoringCommand=new RelayCommand(ToggleMonitoring);
+                Hotwords=new ObservableCollection<string> { "left", "right", "up", "down" };
+                WaveformBitmap=new WriteableBitmap(new Avalonia.PixelSize(_waveformWidth, _waveformHeight), new Avalonia.Vector(96, 96), Avalonia.Platform.PixelFormat.Bgra8888);
+                _waveformBitmap=new SKBitmap(_waveformWidth, _waveformHeight);
             }
-            else
+
+            private void StartCapture()
             {
-                // Implement monitoring stop logic
+                AudioCapture.StartCapture(OnAudioCaptured, AudioCapture.SelectedMicIndex);
             }
-        }
+
+            private void StopCapture()
+            {
+                AudioCapture.StopCapture();
+            }
+
+            private void PlayAudio()
+            {
+                AudioCapture.PlayAudio(AudioCapture.SelectedMicIndex);
+            }
+
+            private void ToggleMonitoring()
+            {
+                _isMonitoringEnabled=!_isMonitoringEnabled;
+                if (_isMonitoringEnabled)
+                {
+                    // Implement monitoring start logic
+                }
+                else
+                {
+                    // Implement monitoring stop logic
+                }
+            }
 
         private void OnAudioCaptured(float[] audioData)
         {
-            // Update signal strength and waveform here
-            SignalStrength=CalculateRMS(audioData);
+            foreach (var sample in audioData)
+            {
+                _audioBuffer.Write(sample);
+            }
+
+            double SignalStrength = CalculateRMS(audioData);
+            // Ensure UI updates are performed on the UI thread
+            Dispatcher.UIThread.InvokeAsync(() => { 
             DrawWaveform(audioData);
             UpdateSignalBars(SignalStrength);
         }
-
-        private double CalculateRMS(float[] audioData)
-        {
-            double sum = 0;
-            foreach (var sample in audioData)
-            {
-                sum+=sample*sample;
-            }
-            return Math.Sqrt(sum/audioData.Length);
+        );
         }
 
-        private void DrawWaveform(float[] audioData)
-        {
-            using (var canvas = new SKCanvas(waveformBitmap))
+
+            private double CalculateRMS(float[] audioData)
             {
-                canvas.Clear(SKColors.Black);
-
-                if (audioData.Length==0)
+                double sum = 0;
+                foreach (var sample in audioData)
                 {
-                    return;
+                    sum+=sample*sample;
                 }
+                return 1000*Math.Sqrt(sum/audioData.Length);
+            }
 
-                float middle = waveformHeight/2f;
-                float maxAmplitude = 1.0f; // Assuming the audio data is normalized between -1 and 1
-
-                using (var paint = new SKPaint())
+            private void DrawWaveform(float[] audioData)
+            {
+                using (var canvas = new SKCanvas(_waveformBitmap))
                 {
-                    paint.Color=SKColors.Green;
-                    paint.IsAntialias=true;
-                    paint.StrokeWidth=1;
+                    canvas.Clear(SKColors.Black);
 
-                    for (int i = 0; i<audioData.Length-1; i++)
+                    if (audioData.Length==0)
                     {
-                        float x1 = (i/(float)audioData.Length)*waveformWidth;
-                        float y1 = middle+(audioData[i]/maxAmplitude)*middle;
-                        float x2 = ((i+1)/(float)audioData.Length)*waveformWidth;
-                        float y2 = middle+(audioData[i+1]/maxAmplitude)*middle;
-
-                        canvas.DrawLine(x1, y1, x2, y2, paint);
+                        return;
                     }
+
+                    float middle = _waveformHeight/2f;
+                    float maxAmplitude = 100.0f; // Assuming the audio data is normalized between -1 and 1
+
+                    using (var paint = new SKPaint())
+                    {
+                        paint.Color=SKColors.Green;
+                        paint.IsAntialias=true;
+                        paint.StrokeWidth=1;
+
+                        for (int i = 0; i<audioData.Length-1; i++)
+                        {
+                            float x1 = (i/(float)audioData.Length)*_waveformWidth;
+                            float y1 = middle+(audioData[i]/maxAmplitude)*middle;
+                            float x2 = ((i+1)/(float)audioData.Length)*_waveformWidth;
+                            float y2 = middle+(audioData[i+1]/maxAmplitude)*middle;
+
+                            canvas.DrawLine(x1, y1, x2, y2, paint);
+                        }
+                    }
+
+                    // Update the Avalonia bitmap with the Skia bitmap
+                    using (var data = _waveformBitmap.PeekPixels())
+                    {
+                        WaveformBitmap=new WriteableBitmap(new Avalonia.PixelSize(_waveformWidth, _waveformHeight), new Avalonia.Vector(96, 96), Avalonia.Platform.PixelFormat.Bgra8888);
+                        using (var stream = WaveformBitmap.Lock())
+                        {
+                            data.ReadPixels(new SKImageInfo(_waveformWidth, _waveformHeight), stream.Address, data.RowBytes);
+
+                    //        OnPropertyChanged(nameof(WaveformBitmap));
+                        }
+                    }
+
+                    OnPropertyChanged(nameof(WaveformBitmap));
                 }
             }
 
-            // Update the Avalonia bitmap with the Skia bitmap
-            using (var data = waveformBitmap.PeekPixels())
+            private void UpdateSignalBars(double rms)
             {
-                WaveformBitmap=new WriteableBitmap(new Avalonia.PixelSize(waveformWidth, waveformHeight), new Avalonia.Vector(96, 96), Avalonia.Platform.PixelFormat.Bgra8888);
-                using (var stream = WaveformBitmap.Lock())
+                // Get the current MainWindow instance
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop&&desktop.MainWindow is MainWindow mainWindow)
                 {
-                    data.SaveTo(stream.Address, data.RowBytes, data.Height);
+                    // Convert RMS to logarithmic scale and update signal bars
+                    var logRMS = Math.Log10(rms+1)*20; // Example conversion
+                    mainWindow.SignalBar1.Fill=logRMS>4 ? Brushes.Yellow : Brushes.Transparent;
+                    mainWindow.SignalBar2.Fill=logRMS>8 ? Brushes.Yellow : Brushes.Transparent;
+                    mainWindow.SignalBar3.Fill=logRMS>12 ? Brushes.Yellow : Brushes.Transparent;
+                    mainWindow.SignalBar4.Fill=logRMS>16 ? Brushes.Yellow : Brushes.Transparent;
+                    mainWindow.SignalBar5.Fill=logRMS>20 ? Brushes.Red : Brushes.Transparent;
                 }
             }
-
-            this.RaisePropertyChanged(nameof(WaveformBitmap));
-        }
-
-        private void UpdateSignalBars(double rms)
-        {
-            // Convert RMS to logarithmic scale and update signal bars
-            var logRMS = Math.Log10(rms+1)*20; // Example conversion
-            SignalBar1.Fill=logRMS>4 ? Brushes.Yellow : Brushes.Transparent;
-            SignalBar2.Fill=logRMS>8 ? Brushes.Yellow : Brushes.Transparent;
-            SignalBar3.Fill=logRMS>12 ? Brushes.Yellow : Brushes.Transparent;
-            SignalBar4.Fill=logRMS>16 ? Brushes.Yellow : Brushes.Transparent;
-            SignalBar5.Fill=logRMS>20 ? Brushes.Red : Brushes.Transparent;
         }
     }
-}
+
+

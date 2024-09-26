@@ -1,0 +1,138 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+    using System.IO;
+    using System.Runtime.InteropServices;
+
+//using SharperPortAudio.Streams;
+//using PortAudio = SharperPortAudio.Base;
+using NAudio.CoreAudioApi.Interfaces;
+using SharperPortAudio.Base;
+
+//HEXAGON_DMA
+
+using PortAudio.Bindings;
+
+namespace HotwordDetectionApp
+{
+  
+ 
+
+
+        /// <summary>
+        /// Provides methods and properties for capturing audio from various input sources.
+        /// </summary>
+        public static class AudioCapture
+        {
+            private static PortAudio.Stream stream;
+            private static Action<float[]> _onAudioCaptured;
+            private static MemoryStream _audioBuffer = new MemoryStream();
+
+            public static object paClipOff { get; private set; }
+
+
+
+            /// <summary>
+            /// Callback function for handling audio stream data. This function is called by the PortAudio library when audio data is available.
+            /// </summary>
+            /// <param name="input">Pointer to the input buffer containing audio data.</param>
+            /// <param name="output">Pointer to the output buffer (not used in this callback).</param>
+            /// <param name="frameCount">Number of frames of audio data in the input buffer.</param>
+            /// <param name="timeInfo">Structure containing timing information for the callback.</param>
+            /// <param name="statusFlags">Flags indicating the status of the audio stream.</param>
+            /// <param name="userData">Pointer to user-defined data (not used in this callback).</param>
+            /// <returns>
+            /// Returns a PortAudio.StreamCallbackResult indicating whether the stream should continue or stop.
+            /// </returns>
+            private static PortAudio.StreamCallbackResult Callback(IntPtr input, IntPtr output, uint frameCount, ref PortAudio.StreamCallbackTimeInfo timeInfo, PortAudio.StreamCallbackFlags statusFlags, IntPtr userData)
+        {
+            var buffer = new float[frameCount];
+            Marshal.Copy(input, buffer, 0, (int)frameCount);
+
+            _onAudioCaptured?.Invoke(buffer);
+
+            // Save the audio data to the buffer
+            byte[] byteBuffer = new byte[buffer.Length*sizeof(float)];
+            Buffer.BlockCopy(buffer, 0, byteBuffer, 0, byteBuffer.Length);
+            _audioBuffer.Write(byteBuffer, 0, byteBuffer.Length);
+
+            return pa_Continue;
+        }
+
+        /// <summary>
+        /// Stops the audio capture by stopping the stream, closing the stream, and terminating the PortAudio library.
+        /// </summary>
+        public static void StopCapture()
+        {
+
+
+            StopStream(_stream);
+            paCloseStream(_stream);
+            Terminate();
+        }
+
+        /// <summary>
+        /// Plays audio from the audio buffer using PortAudio library.
+        /// </summary>
+        public static void PlayAudio()
+        {
+            _audioBuffer.Position=0;
+            var outputParameters = new PortAudio.PaStreamParameters
+            {
+                device=PortAudio.PortAudio.GetDefaultOutputDevice(),
+                channelCount=1,
+                sampleFormat=PortAudio.SampleFormat.Float32,
+                suggestedLatency=PortAudio.PortAudio.GetDeviceInfo(DefaultOutputDevice).defaultLowOutputLatency,
+                hostApiSpecificStreamInfo=IntPtr.Zero
+            };
+
+           Pa_OpenStream(out _stream, IntPtr.Zero, ref outputParameters, 16000, 256, PortAudio.PaStreamFlags.paClipOff, PlaybackCallback, IntPtr.Zero);
+           Pa_StartStream(_stream);
+        }
+
+        /// <summary>
+        /// Callback function for audio playback. Reads audio data from the buffer and writes it to the output stream.
+        /// </summary>
+        /// <param name="input">Pointer to the input buffer (not used in playback).</param>
+        /// <param name="output">Pointer to the output buffer where audio data will be written.</param>
+        /// <param name="frameCount">Number of frames to be processed.</param>
+        /// <param name="timeInfo">Time information for the stream callback.</param>
+        /// <param name="statusFlags">Flags indicating the status of the stream.</param>
+        /// <param name="userData">Pointer to user-defined data (not used in this callback).</param>
+        /// <returns>
+        /// Returns PortAudio.StreamCallbackResult.Continue if more data is to be processed, or PortAudio.StreamCallbackResult.Complete if playback is finished.
+        /// </returns>
+        private static StreamCallbackResult PlaybackCallback(IntPtr input, IntPtr output, uint frameCount, ref PortAudio.StreamCallbackTimeInfo timeInfo, PortAudio.StreamCallbackFlags statusFlags, IntPtr userData)
+        {
+            byte[] buffer = new byte[frameCount*sizeof(float)];
+            int bytesRead = _audioBuffer.Read(buffer, 0, buffer.Length);
+
+            if (bytesRead==0)
+            {
+                return StreamCallbackResult.Complete;
+            }
+
+            Marshal.Copy(buffer, 0, output, bytesRead/sizeof(float));
+            return StreamCallbackResult.Continue;
+        }
+     private static StreamCallbackResult Callback(IntPtr input, IntPtr output, uint frameCount, ref StreamCallbackTimeInfo timeInfo, StreamCallbackFlags statusFlags);
+
+
+            public static void StartCapture(Action<float[]> onAudioCaptured)
+            {
+                _onAudioCaptured=onAudioCaptured;
+                Pa_Initialize();
+                var inputParameters = new PaStreamParameters
+                {
+                    channelCount=1,
+                    sampleFormat=SampleFormat.Float32,
+                    SuggestedLatency=GetDeviceInfo(DefaultInputDevice).defaultLowInputLatency,
+                    hostApiSpecificStreamInfo=IntPtr.Zero
+                    
+                    
+                 }
+                    Pa_StartStream(out stream, ref inputParameters, IntPtr.Zero, 16000, 256, paClipOff,   Callback, IntPtr.Zero);
+  }
+}

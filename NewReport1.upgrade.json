@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "components": {
+      "code": true,
+      "binaries": false
+    },
+    "targetId": "",
+    "targetDisplayName": ".NET 8.0"
+  },
+  "analysisStartTime": "2024-09-24T03:59:40.5722217Z",
+  "analysisEndTime": "2024-09-24T03:59:40.9393621Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 1,
+      "issues": 0,
+      "incidents": 0,
+      "effort": 0
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 0,
+        "Optional": 0,
+        "Potential": 0,
+        "Information": 0
+      },
+      "category": {}
+    }
+  },
+  "projects": [
+    {
+      "path": "HotwordDetectionApp.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "ruleInstances": []
+    }
+  ],
+  "rules": {}
+}
